@@ -1,0 +1,254 @@
+TITLE: "Red Wine Quality Analysis"
+Author:"Ishita Joshi"
+output:
+  html_document:
+    fig_caption: yes
+    keep_md: yes
+    theme: readable
+    toc: yes
+
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using
+library(ggplot2)
+library(grid)
+library(readr)
+library(gridExtra)
+library(GGally)
+library(corrplot)
+library(memisc)
+
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk.
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+
+# in your analysis in this code chunk.
+
+
+# This prevents the code from displaying in the knitted HTML output.
+# You should set echo=FALSE for all code chunks in your file.
+
+library(ggplot2)
+```
+
+```{r echo=FALSE, Load_the_Data}
+# Load the Data
+rwine v("wineQualityR<- read.cseds.csv",row.names=NULL)
+```
+
+# Univariate Plots Section
+```{r echo=FALSE, Univariate_Plots}
+str(rwine)
+```
+
+dim(rwine)
+
+names(rwine)
+
+rwine$quality <- as.factor(rwine$quality)
+levels(rwine$quality)
+
+summary(rwine)
+
+Most red wines have quality "5" or "6". Most red wines have a pH between "3.210" and "3.400". Most red wines have chlorides between "0.07" and "0.09". 
+
+```{r}
+summary(rwine$quality)
+ggplot(data = rwine, aes(x = quality))+
+  geom_bar()
+```
+
+We can say the distribution of quality appears to be normal with many wines at average quality (4-5) and fewer wines at low quality and high quality. There are no wines with a quality worse than 3 and no wines with quality higher than 8.
+
+## Volatile acidity
+
+```{r}
+ggplot(aes(x = volatile.acidity), data = rwine) + 
+  geom_histogram()
+```
+
+```{r}
+summary(rwine$volatile.acidity)
+
+```
+```{r}
+table(rwine$volatile.acidity > 1.2)
+```
+
+Most wines have volatile.acidity between 0.39 and 0.64,there are several outliers.
+
+Compare log10 total volatile.acidity to total volatile acidity to 
+get a more normal distribution 
+
+
+```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_correlation}
+
+cor_test <- function(x, y) {
+  return(cor.test(x, as.numeric(y))$estimate)
+}
+correlations <- c(
+  cor_test(rwine$fixed.acidity, rwine$quality),
+  cor_test(rwine$citric.acid, rwine$quality),
+  cor_test(rwine$sulphates, rwine$quality),
+  cor_test(rwine$alcohol, rwine$quality),
+  cor_test(rwine$volatile.acidity, rwine$quality),
+  cor_test(rwine$chlorides, rwine$quality),
+  cor_test(rwine$density, rwine$quality))
+names(correlations) <- c('fixed.acidity', 'citric.acid', 
+                         'sulphates', 'alcohol', 
+                         'volatile.acidity',
+                         'chlorides', 'density')
+correlations
+```
+        
+```
+
+## Citric acid
+```{r echo=FALSE, message=FALSE, warning=FALSE,Univariate_Plots,fig.width=16,fig.height=9}
+p0<-
+  ggplot(aes(x = quality), data = rwine) +
+  geom_histogram(binwidth = 1)+
+  scale_x_continuous(breaks = seq(0,10,1))
+  
+  
+p1<-
+  ggplot(aes(x = fixed.acidity), data = rwine) +
+  geom_histogram(binwidth = 0.2)
+
+p2<-
+  ggplot(aes(x = volatile.acidity), data = rwine) +
+  geom_histogram(binwidth = 0.02)
+
+p3<-ggplot(aes(x =  citric.acid), data = rwine) +
+  geom_histogram(binwidth = 0.02)
+
+p4<-ggplot(aes(x = residual.sugar), data = rwine) +
+  geom_histogram()
+
+p5<-ggplot(aes(x = chlorides), data = rwine) +
+  geom_histogram(binwidth = 0.003)
+
+p6<-ggplot(aes(x = free.sulfur.dioxide), data = rwine) +
+  geom_histogram(binwidth = 4)
+
+p7<-ggplot(aes(x = total.sulfur.dioxide), data = rwine) +
+  geom_histogram(binwidth = 6)
+
+p8<-ggplot(aes(x = density), data = rwine) +
+  geom_histogram(binwidth = 0.001)
+
+p9<-ggplot(aes(x = pH), data = rwine) +
+  geom_histogram(binwidth = 0.03)
+
+p10<-ggplot(aes(x = sulphates), data = rwine) +
+  geom_histogram(binwidth = 0.02)
+
+p11<-ggplot(aes(x = alcohol), data = rwine) +
+  geom_histogram(binwidth = 0.1)
+
+grid.arrange(p0,p1,p2,p3,p4,p5,
+             p6,p7,p8,p9,p10,p11,
+             nrow = 3, ncol = 4)
+
+```
+
+Quality and most input variables have a bell shape normal distribution, except the following variables:
+- residual.sugar: long tail on the right
+- citric.acid: normal distribution with some spikes on the right side
+- alcohol: uncertain
+
+```{r}
+rwine$acid_factor <- factor(ifelse(rwine$pH<3,'Acidic','Regular'))
+```
+
+## Chloride
+
+``` {r}
+ggplot(aes(x = chlorides), data = rwine) + 
+  geom_histogram()
+
+```
+
+Now Let's see a histogram without first and last 5% quantile
+```{r}
+ggplot(aes(x = chlorides), data = rwine) + 
+  geom_histogram(binwidth = 0.01) + 
+  xlim(quantile(rwine$chlorides,probs=0.05),quantile(rwine$chlorides,probs = 0.95))
+```
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+
+### What is/are the main feature(s) of interest in your dataset?
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+
+### Did you create any new variables from existing variables in the dataset?
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+
+
+
+# Bivariate Plots Section
+```{r echo=FALSE, Bivariate_Plots}
+
+```
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+
+### What was the strongest relationship you found?
+
+
+
+
+# Multivariate Plots Section
+
+```{r echo=FALSE, Multivariate_Plots}
+
+```
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+
+### Were there any interesting or surprising interactions between features?
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, Plot_One}
+
+```
+
+### Description One
+
+
+### Plot Two
+```{r echo=FALSE, Plot_Two}
+
+```
+
+### Description Two
+
+
+### Plot Three
+```{r echo=FALSE, Plot_Three}
+
+```
+
+### Description Three
+
+------
+
+# Reflection
